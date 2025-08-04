@@ -1,0 +1,755 @@
+{
+  "name": "Main copy (test)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "a30813b6-ef7d-4b9c-a9bc-e47143e7bb05",
+        "options": {
+          "responseData": "={\"status\":\"recieved\"}"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        48
+      ],
+      "id": "155822f6-2a38-4295-9d7c-83c3957370ef",
+      "name": "Zoho survey Trigger",
+      "webhookId": "a30813b6-ef7d-4b9c-a9bc-e47143e7bb05"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all input items\nconst items = $input.all();\n\n// Process each item\nconst processedItems = items.map((item, index) => {\n  console.log(`Processing item ${index}:`, JSON.stringify(item, null, 2));\n  \n  const inputData = item.json;\n  \n  // Helper function to clean and format values\n  const cleanValue = (value) => {\n    if (!value) return \"\";\n    \n    // Handle arrays - join with comma\n    if (Array.isArray(value)) {\n      return value.join(\", \");\n    }\n    \n    const stringValue = String(value);\n    \n    // Clean bracketed values like \"[25-46]\" -> \"25-46\"\n    if (stringValue.startsWith('[') && stringValue.endsWith(']')) {\n      return stringValue.slice(1, -1);\n    }\n    \n    return stringValue;\n  };\n  \n  try {\n    // Create the structured output object with mapped fields\n    const outputData = {\n      // Basic identifiers\n      survey_id: inputData.body?.survey_id || `survey_${Date.now()}_${index}`,\n      response_id: `response_${Date.now()}_${index}`,\n      \n      // Timestamps\n      submitted_at: new Date().toISOString(),\n      processed_at: new Date().toISOString(),\n      \n      // Survey responses mapped to your specified field names\n      name: cleanValue(inputData.body?.p1_q1) || \"\",\n      age: cleanValue(inputData.body?.p1_q2) || \"\",\n      current_residence: cleanValue(inputData.body?.p1_q3) || \"\",\n      family_structure: cleanValue(inputData.body?.p1_q4) || \"\",\n      connection_spiritual_practices: cleanValue(inputData.body?.p1_q5) || \"\",\n      past_yatras: cleanValue(inputData.body?.p1_q6) || \"\",\n      \n      type_yatras: cleanValue(inputData.body?.p2_q1) || \"\",\n      happiest_yatra_moments: cleanValue(inputData.body?.p2_q2) || \"\",\n      challenges_during_yatras: cleanValue(inputData.body?.p2_q3) || \"\",\n      yatra_improvement_suggestion: cleanValue(inputData.body?.p2_q4) || \"\",\n      \n      yatra_motivation: cleanValue(inputData.body?.p4_q1) || \"\",\n      family_yatra_motivation: cleanValue(inputData.body?.p4_q2) || \"\",\n      factors_chosing_mty: cleanValue(inputData.body?.p4_q3) || \"\",\n      imp_spiritual_guide: cleanValue(inputData.body?.p4_q4) || \"\",\n      imp_personalised_itenary: cleanValue(inputData.body?.p4_q5) || \"\",\n      imp_group_size: cleanValue(inputData.body?.p4_q6) || \"\",\n      imp_tech_updates: cleanValue(inputData.body?.p4_q7) || \"\",\n      imp_transparent_pricing: cleanValue(inputData.body?.p4_q8) || \"\",\n      imp_qualaity_accomadation: cleanValue(inputData.body?.p4_q9) || \"\",\n      imp_special_access: cleanValue(inputData.body?.p4_q10) || \"\",\n      imp_pre_preperation: cleanValue(inputData.body?.p4_q11) || \"\",\n      imp_post_followup: cleanValue(inputData.body?.p4_q12) || \"\",\n      imp_sustainabilty: cleanValue(inputData.body?.p4_q13) || \"\",\n      \n      reasonable_3day_cost: cleanValue(inputData.body?.p5_q1) || \"\",\n      offers_inc_price: cleanValue(inputData.body?.p5_q2) || \"\",\n      exploring_offbeat_destinations: cleanValue(inputData.body?.p5_q3) || \"\",\n      criteria_visiting_offbeat_destination: cleanValue(inputData.body?.p5_q4) || \"\",\n      \n      source_yatra_opportunities: cleanValue(inputData.body?.p6_q1) || \"\",\n      valuable_yatra_content: cleanValue(inputData.body?.p6_q2) || \"\",\n      \n      transformative_yatra_opinion: cleanValue(inputData.body?.p7_q1) || \"\",\n      recommend_mty_friend: cleanValue(inputData.body?.p7_q2) || \"\",\n      contact_method: cleanValue(inputData.body?.p7_q3) || \"\",\n      whatsapp: cleanValue(inputData.body?.p7_q4) || \"\",\n      email: cleanValue(inputData.body?.p7_q5) || \"\",\n      \n      // Technical metadata\n      completion_status: \"completed\",\n      source: \"mytempleyatra_survey\",\n      execution_id: $execution.id || \"\",\n      workflow_version: \"1.0\",\n      webhook_url: inputData.webhookUrl || \"\",\n      execution_mode: inputData.executionMode || \"production\",\n      \n      // Network information\n      respondent_user_agent: inputData.headers?.['user-agent'] || \"\",\n      client_ip: inputData.headers?.['x-forwarded-for'] || \"unknown\",\n      content_type: inputData.headers?.['content-type'] || \"\",\n      \n      // Raw data preservation (optional, for debugging)\n      raw_body_keys: inputData.body ? Object.keys(inputData.body) : [],\n      raw_headers_keys: inputData.headers ? Object.keys(inputData.headers) : []\n    };\n    \n    console.log(`Successfully processed item ${index}:`, {\n      survey_id: outputData.survey_id,\n      respondent_name: outputData.name,\n      response_count: Object.keys(inputData.body || {}).length,\n      email: outputData.email\n    });\n    \n    return { json: outputData };\n    \n  } catch (error) {\n    console.error(`Error processing item ${index}:`, error.message);\n    \n    // Return error object in case of processing failure\n    return {\n      json: {\n        error: true,\n        error_message: error.message,\n        error_timestamp: new Date().toISOString(),\n        survey_id: `error_${Date.now()}_${index}`,\n        execution_id: $execution.id || \"\",\n        raw_input_preview: JSON.stringify(inputData).slice(0, 200) + \"...\"\n      }\n    };\n  }\n});\n\nconsole.log(`Processing complete. Total items processed: ${processedItems.length}`);\nreturn processedItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -128,
+        48
+      ],
+      "id": "1ef24d75-0a87-4a79-91f8-5127af320afb",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "raw_data",
+        "fields": "=survey_id,response_id,name,age,current_residence,family_structure,connection_spiritual_practices,past_yatras,type_yatras,happiest_yatra_moments,challenges_during_yatras,yatra_improvement_suggestion,yatra_motivation,family_yatra_motivation,factors_chosing_mty,imp_spiritual_guide,imp_personalised_itenary,imp_group_size,imp_tech_updates,imp_transparent_pricing,imp_qualaity_accomadation,imp_special_access,imp_pre_preperation,imp_post_followup,imp_sustainabilty,reasonable_3day_cost,offers_inc_price,exploring_offbeat_destinations,criteria_visiting_offbeat_destination,source_yatra_opportunities,valuable_yatra_content,transformative_yatra_opinion,recommend_mty_friend,contact_method,whatsapp,email,submitted_at,processed_at\n",
+        "options": {
+          "dateFields": "={{ $json.survey_id }},{{ $json.response_id }},{{ $json.name }},{{ $json.age }},{{ $json.current_residence }},{{ $json.family_structure }},{{ $json.connection_spiritual_practices }},{{ $json.past_yatras }},{{ $json.type_yatras }},{{ $json.happiest_yatra_moments }},{{ $json.challenges_during_yatras }},{{ $json.yatra_improvement_suggestion }},{{ $json.yatra_motivation }},{{ $json.family_yatra_motivation }},{{ $json.factors_chosing_mty }},{{ $json.imp_spiritual_guide }},{{ $json.imp_personalised_itenary }},{{ $json.imp_group_size }},{{ $json.imp_tech_updates }},{{ $json.imp_transparent_pricing }},{{ $json.imp_qualaity_accomadation }},{{ $json.imp_special_access }},{{ $json.imp_pre_preperation }},{{ $json.imp_post_followup }},{{ $json.imp_sustainabilty }},{{ $json.reasonable_3day_cost }},{{ $json.offers_inc_price }},{{ $json.exploring_offbeat_destinations }},{{ $json.criteria_visiting_offbeat_destination }},{{ $json.source_yatra_opportunities }},{{ $json.valuable_yatra_content }},{{ $json.transformative_yatra_opinion }},{{ $json.recommend_mty_friend }},{{ $json.contact_method }},{{ $json.whatsapp }},{{ $json.email }},{{ $json.submitted_at }},{{ $json.processed_at }}",
+          "useDotNotation": false
+        }
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        112,
+        48
+      ],
+      "id": "15f0776f-18b0-4617-8f75-3842e4e0c8ca",
+      "name": "insert_raw_data"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "respondent_info",
+        "fields": "=survey_id,name,age,current_residence,family_structure,contact_method,whatsapp,email\n",
+        "options": {
+          "dateFields": "={{ $json.survey_id }},{{ $json.name }},{{ $json.age }},{{ $json.current_residence }},{{ $json.family_structure }},{{ $json.contact_method }},{{ $json.whatsapp }},{{ $json.email }}",
+          "useDotNotation": false
+        }
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        -256
+      ],
+      "id": "89d68e07-9061-4092-9df8-ed2b3d6be4e7",
+      "name": "respondent_info",
+      "credentials": {
+        "mongoDb": {
+          "id": "Pys6IRxen5Zcz6vC",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "previous_yatra_experiences",
+        "fields": "=respondent_info,connection_spiritual_practices,past_yatras,type_yatras,happiest_yatra_moments,challenges_during_yatras,yatra_improvement_suggestion\n",
+        "options": {
+          "dateFields": "={{ $json.respondent_info }},{{ $json.connection_spiritual_practices }},{{ $json.past_yatras }},{{ $json.type_yatras }},{{ $json.happiest_yatra_moments }},{{ $json.challenges_during_yatras }},{{ $json.yatra_improvement_suggestion }}",
+          "useDotNotation": true
+        }
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        -80
+      ],
+      "id": "528ba778-b614-4b01-8712-28051a6ac179",
+      "name": "previous_yatra_experiences",
+      "credentials": {
+        "mongoDb": {
+          "id": "Pys6IRxen5Zcz6vC",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "yatra_motivation",
+        "fields": "=respondent_info,yatra_motivation,family_yatra_motivation,factors_chosing_mty,imp_spiritual_guide,imp_personalised_itenary,imp_group_size,imp_tech_updates,imp_transparent_pricing,imp_qualaity_accomadation,imp_special_access,imp_pre_preperation,imp_post_followup,imp_sustainabilty",
+        "options": {
+          "dateFields": "={{ $json.respondent_info }},{{ $json.yatra_motivation }},{{ $json.family_yatra_motivation }},{{ $json.factors_chosing_mty }},{{ $json.imp_spiritual_guide }},{{ $json.imp_personalised_itenary }},{{ $json.imp_group_size }},{{ $json.imp_tech_updates }},{{ $json.imp_transparent_pricing }},{{ $json.imp_qualaity_accomadation }},{{ $json.imp_special_access }},{{ $json.imp_pre_preperation }},{{ $json.imp_post_followup }},{{ $json.imp_sustainabilty }}",
+          "useDotNotation": false
+        }
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        160
+      ],
+      "id": "870156a1-3c93-47bd-87dd-dd68f0e8c913",
+      "name": "yatra_motivation",
+      "credentials": {
+        "mongoDb": {
+          "id": "Pys6IRxen5Zcz6vC",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "preference_collection",
+        "fields": "=respondent_info,reasonable_3day_cost,offers_inc_price,exploring_offbeat_destinations,criteria_visiting_offbeat_destination,source_yatra_opportunities,valuable_yatra_content,transformative_yatra_opinion",
+        "options": {
+          "dateFields": "={{ $json.respondent_info }},{{ $json.reasonable_3day_cost }},{{ $json.offers_inc_price }},{{ $json.exploring_offbeat_destinations }},{{ $json.criteria_visiting_offbeat_destination }},{{ $json.source_yatra_opportunities }},{{ $json.valuable_yatra_content }},{{ $json.transformative_yatra_opinion }}",
+          "useDotNotation": false
+        }
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        352
+      ],
+      "id": "457eb00f-14f8-41b5-8d00-edd4cc1b73ce",
+      "name": "preference_collection",
+      "credentials": {
+        "mongoDb": {
+          "id": "Pys6IRxen5Zcz6vC",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Database Structure\nsurvey_db/\n├── respondent_info/           # Core respondent data\n├── previous_yatra_experiences/     # Past yatra participation data\n├── yatra_motivation/          # What drives respondents\n├── preference_collection/          # Travel and spiritual preferences\n├── survey_analysis_results         # Results of survey analysis\n└── raw_data/     # Complete raw survey data (backup)\n",
+        "height": 224,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -208,
+        -256
+      ],
+      "typeVersion": 1,
+      "id": "7177f457-76d6-45a6-a498-14c1244360ba",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "// In Function Node\nconst newItem = {\n  respondent_info: {\n    survey_id: $input.item.json.survey_id,\n    name: $input.item.json.name,\n    age: $input.item.json.age,\n    current_residence: $input.item.json.current_residence,\n    family_structure: $input.item.json.family_structure\n  },\n  connection_spiritual_practices: $input.item.json.connection_spiritual_practices,\n  past_yatras: $input.item.json.past_yatras,\n  type_yatras: $input.item.json.type_yatras,\n  happiest_yatra_moments: $input.item.json.happiest_yatra_moments,\n  challenges_during_yatras: $input.item.json.challenges_during_yatras,\n  yatra_improvement_suggestion: $input.item.json.yatra_improvement_suggestion\n};\nreturn { json: newItem };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        -80
+      ],
+      "id": "0fd62bf7-9271-4320-807b-3cd4d7938b0e",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// In Function Node\nconst newItem = {\n  respondent_info: {\n    survey_id: $input.item.json.survey_id,\n    name: $input.item.json.name,\n    age: $input.item.json.age,\n    current_residence: $input.item.json.current_residence,\n    family_structure: $input.item.json.family_structure\n  },\n  yatra_motivation: $input.item.json.yatra_motivation,\n  family_yatra_motivation: $input.item.json.family_yatra_motivation,\n  factors_chosing_mty: $input.item.json.factors_chosing_mty,\n  imp_spiritual_guide: $input.item.json.imp_spiritual_guide,\n  imp_personalised_itenary: $input.item.json.imp_personalised_itenary,\n  imp_group_size: $input.item.json.imp_group_size,\n  imp_tech_updates: $input.item.json.imp_tech_updates,\n  imp_transparent_pricing: $input.item.json.imp_transparent_pricing,\n  imp_qualaity_accomadation: $input.item.json.imp_qualaity_accomadation,\n  imp_special_access: $input.item.json.imp_special_access,\n  imp_pre_preperation: $input.item.json.imp_pre_preperation,\n  imp_post_followup: $input.item.json.imp_post_followup,\n  imp_sustainabilty: $input.item.json.imp_sustainabilty\n};\nreturn { json: newItem };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        160
+      ],
+      "id": "226413d8-1890-4314-bcc5-8ee6a9ecbc27",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// In Function Node\nconst newItem = {\n  respondent_info: {\n    survey_id: $input.item.json.survey_id,\n    name: $input.item.json.name,\n    age: $input.item.json.age,\n    current_residence: $input.item.json.current_residence,\n    family_structure: $input.item.json.family_structure\n  },\n  reasonable_3day_cost: $input.item.json.reasonable_3day_cost,\n  offers_inc_price: $input.item.json.offers_inc_price,\n  exploring_offbeat_destinations: $input.item.json.exploring_offbeat_destinations,\n  criteria_visiting_offbeat_destination: $input.item.json.criteria_visiting_offbeat_destination,\n  source_yatra_opportunities: $input.item.json.source_yatra_opportunities,\n  valuable_yatra_content: $input.item.json.valuable_yatra_content,\n  transformative_yatra_opinion: $input.item.json.transformative_yatra_opinion\n};\nreturn { json: newItem };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        352
+      ],
+      "id": "c1ae276a-55db-4e08-96ec-060f3a9b230a",
+      "name": "Code3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        464,
+        -256
+      ],
+      "id": "b15e504e-0723-484e-98ff-bc44be04971b",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "collection": "raw_data",
+        "options": {
+          "limit": 25
+        }
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        -112,
+        896
+      ],
+      "id": "e7949221-ea70-480f-951b-83a3522c80cf",
+      "name": "read_data",
+      "credentials": {
+        "mongoDb": {
+          "id": "Pys6IRxen5Zcz6vC",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this comprehensive survey data: {{ JSON.stringify($json, null, 2) }}",
+        "options": {
+          "systemMessage": "=# AI Agent System Prompt for MyTempleYatra Survey Analysis\n\n## Role & Expertise\nYou are a **Senior Business Intelligence Analyst** specializing in spiritual tourism, customer experience analysis, and market research. You have expertise in survey data interpretation, customer segmentation, business strategy, and actionable insights generation.\n\n## Mission\nAnalyze comprehensive survey data from MyTempleYatra to provide strategic business insights, customer behavior patterns, and actionable recommendations for business growth and customer satisfaction improvement.\n\n## Analysis Framework\n\n### 1. **Executive Summary & Key Findings**\n- Overall survey response analysis (sample size, data quality)\n- Top 5 critical insights that impact business strategy\n- Customer satisfaction overview\n- Market positioning assessment\n- Urgency indicators for immediate action\n\n### 2. **Customer Demographics & Segmentation**\n- Age group analysis and behavioral patterns\n- Geographic distribution and regional preferences\n- Family structure impact on travel decisions\n- Spiritual engagement levels and their correlation with loyalty\n- Customer persona development (3-4 distinct segments)\n\n### 3. **Experience Journey Analysis**\n- Past yatra participation patterns and customer lifecycle\n- Spiritual connection levels and their business implications\n- Happiest moments analysis - what creates customer delight\n- Pain points and challenges - what causes customer dissatisfaction\n- Experience-based customer satisfaction scoring\n\n### 4. **Service Performance & Gap Analysis**\n- Service importance ratings analysis (1-5 scale breakdown)\n- Service delivery gaps (expectations vs performance)\n- Priority matrix for service improvements\n- Competitive advantage identification\n- Service quality benchmarking\n\n### 5. **Motivation & Decision-Making Insights**\n- Primary motivation drivers for yatra participation\n- Family vs individual decision-making patterns\n- Factors influencing MyTempleYatra selection\n- Emotional vs practical decision drivers\n- Seasonal and demographic motivation variations\n\n### 6. **Market Intelligence & Opportunities**\n- Budget preference analysis and pricing strategy implications\n- Offbeat destination interest and market expansion opportunities\n- Information source preferences and marketing channel optimization\n- Content consumption patterns and content strategy recommendations\n- Recommendation likelihood and referral program potential\n\n### 7. **Business Strategy Recommendations**\n- **Immediate Actions** (1-4 weeks): Critical fixes and quick wins\n- **Short-term Initiatives** (1-3 months): Service improvements and process optimization\n- **Long-term Strategy** (3-12 months): Market expansion and competitive positioning\n- **Innovation Opportunities**: New services, technology integration, unique offerings\n\n### 8. **Risk Analysis & Mitigation**\n- Customer churn risks and retention strategies\n- Service delivery risks and quality assurance\n- Market competition threats and defensive strategies\n- Operational challenges and scalability concerns\n\n### 9. **Performance Metrics & KPIs**\n- Customer satisfaction index calculation\n- Net Promoter Score (NPS) estimation\n- Customer lifetime value indicators\n- Market penetration potential assessment\n- Service quality benchmarks\n\n## Output Requirements\n\n### **Comprehensive Analysis Report** (3000-4000 words)\n1. **Executive Dashboard** with key metrics and visualizable data\n2. **Strategic Recommendations** prioritized by impact and feasibility\n3. **Customer Journey Mapping** with experience touchpoints\n4. **Action Plan** with timelines, responsibilities, and success metrics\n5. **ROI Projections** for recommended initiatives\n\n### **Data-Driven Insights**\n- Statistical significance assessment\n- Correlation analysis between variables\n- Trend identification and pattern recognition\n- Confidence levels for each recommendation\n- Quantified business impact projections\n\n## Analysis Context\n\n**Company**: MyTempleYatra - Spiritual tourism company focusing on temple visits and religious experiences\n**Market**: Indian families and individuals seeking authentic spiritual journeys\n**Business Model**: Professional guided temple tours with premium comfort and authentic experiences\n**Competition**: Traditional travel agencies, online booking platforms, and spiritual tour operators\n\n## Key Business Questions to Address\n\n1. What are the primary drivers of customer satisfaction and loyalty?\n2. Which customer segments offer the highest growth potential?\n3. What service improvements would have the maximum ROI?\n4. How can MyTempleYatra differentiate from competitors?\n5. What pricing strategy optimizes revenue and accessibility?\n6. Which marketing channels and messages resonate most effectively?\n7. What operational changes would improve customer experience?\n8. How can the company scale while maintaining service quality?\n\n## Data Processing Guidelines\n\n- Analyze both quantitative ratings and qualitative feedback\n- Identify statistically significant patterns and correlations\n- Cross-reference demographic data with preferences and satisfaction\n- Look for hidden insights in open-ended responses\n- Calculate confidence intervals for key metrics\n- Identify outliers and their potential significance\n- Assess data completeness and quality implications\n\n## Expected Deliverables Format\n\n```\nEXECUTIVE SUMMARY\n[Key findings, critical insights, immediate actions needed]\n\nCUSTOMER INTELLIGENCE\n[Demographics, segmentation, personas, journey mapping]\n\nSERVICE PERFORMANCE ANALYSIS\n[Current state, gaps, improvement priorities, benchmarks]\n\nSTRATEGIC RECOMMENDATIONS\n[Prioritized action plan with timelines, resources, expected outcomes]\n\nBUSINESS IMPACT PROJECTIONS\n[ROI calculations, revenue impact, customer satisfaction improvements]\n\nIMPLEMENTATION ROADMAP\n[Step-by-step execution plan with success metrics]\n```\n\nPlease provide a comprehensive, actionable analysis that enables MyTempleYatra leadership to make informed strategic decisions and drive business growth while enhancing customer satisfaction."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        352,
+        896
+      ],
+      "id": "524ed944-f827-4a4c-8a96-2e2f8a26d050",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        1136
+      ],
+      "id": "20fdf3b8-11ef-4c0e-9f10-45ea83358e93",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Solution 1: Simple Input Access\nconsole.log(\"Processing AI analysis results...\");\n\n// Get the AI analysis data (most common pattern)\nconst inputs = $input.all();\nconst aiAnalysis = inputs[0].json; // Direct access to first input's json\nconst originalData = inputs[1] ? inputs[1].json : null; // Second input if available\n\nconsole.log(\"AI analysis received:\", typeof aiAnalysis);\nconsole.log(\"Original data received:\", typeof originalData);\n\n// Extract AI response content with multiple fallback options\nconst analysisText = aiAnalysis?.output || \n                    aiAnalysis?.response || \n                    aiAnalysis?.text || \n                    aiAnalysis?.content || \n                    JSON.stringify(aiAnalysis);\n\nconsole.log(\"AI analysis text length:\", analysisText?.length || 0);\n\n// Validate we have the required data\nif (!analysisText) {\n  throw new Error(\"No AI analysis content found. Check AI agent output structure.\");\n}\n\nif (!originalData) {\n  console.warn(\"No original data found. Creating analysis without original data reference.\");\n}\n\n// Create comprehensive analysis result structure\nconst finalAnalysisResult = {\n  // Analysis metadata\n  analysis_id: `mty_analysis_${Date.now()}`,\n  generated_at: new Date().toISOString(),\n  analysis_type: \"comprehensive_survey_analysis\",\n  data_source: \"ai_agent_output\",\n  total_responses_analyzed: originalData?.metadata?.totalResponses || \"unknown\",\n  data_quality_score: originalData ? calculateDataQuality(originalData) : 100,\n  analysis_version: \"2.0\",\n  \n  // AI Analysis Content\n  ai_generated_analysis: {\n    full_report: analysisText,\n    report_sections: extractSections(analysisText),\n    word_count: analysisText.split(' ').length,\n    generated_by: \"AI_Agent\",\n    confidence_level: \"High\"\n  },\n  \n  // Executive Summary (extracted from AI analysis)\n  executive_summary: {\n    key_findings: extractKeyFindings(analysisText),\n    critical_insights: extractCriticalInsights(analysisText),\n    immediate_actions: extractImmediateActions(analysisText),\n    overall_sentiment: analyzeSentiment(analysisText),\n    business_impact_score: originalData ? calculateBusinessImpactScore(originalData) : 75\n  },\n  \n  // Simplified structure for when original data is not available\n  processing_info: {\n    inputs_received: inputs.length,\n    original_data_available: !!originalData,\n    ai_analysis_available: !!analysisText,\n    processing_status: \"success\"\n  }\n};\n\n// Simplified helper functions that work without original data\nfunction calculateDataQuality(data) {\n  if (!data || !data.metadata) return 85;\n  const totalPossibleFields = data.metadata.totalResponses * 15;\n  const completedFields = data.qualitativeData?.customerVoices?.length || data.metadata.totalResponses;\n  return Math.round((completedFields / totalPossibleFields) * 100);\n}\n\nfunction extractSections(text) {\n  const sections = {};\n  const sectionHeaders = ['executive summary', 'customer intelligence', 'service performance', \n                         'strategic recommendations', 'market intelligence', 'implementation roadmap'];\n  \n  sectionHeaders.forEach(header => {\n    const regex = new RegExp(`${header}[^\\\\n]*\\\\n([\\\\s\\\\S]*?)(?=\\\\n[A-Z][A-Z\\\\s]+\\\\n|$)`, 'i');\n    const match = text.match(regex);\n    if (match) {\n      sections[header.replace(' ', '_')] = match[1].trim();\n    }\n  });\n  \n  return sections;\n}\n\nfunction extractKeyFindings(text) {\n  const findings = [];\n  const lines = text.split('\\n');\n  \n  lines.forEach(line => {\n    if (line.includes('•') || line.includes('-') || line.match(/^\\d+\\./)) {\n      const finding = line.replace(/[•\\-0-9\\.]/g, '').trim();\n      if (finding.length > 10 && finding.length < 200) {\n        findings.push(finding);\n      }\n    }\n  });\n  \n  return findings.slice(0, 8);\n}\n\nfunction extractCriticalInsights(text) {\n  const insights = [];\n  \n  // Method 1: Look for sentences with impact words\n  const impactKeywords = ['critical', 'important', 'significant', 'key insight', 'major', \n                         'crucial', 'essential', 'primary', 'main finding', 'notable', \n                         'substantial', 'dominant', 'strong', 'high priority', 'gap'];\n  \n  const sentences = text.split(/[.!?]+/).filter(sentence => sentence.trim().length > 20);\n  \n  sentences.forEach(sentence => {\n    const lowerSentence = sentence.toLowerCase();\n    if (impactKeywords.some(keyword => lowerSentence.includes(keyword))) {\n      const cleanSentence = sentence.trim();\n      if (cleanSentence.length > 30 && cleanSentence.length < 300) {\n        insights.push(cleanSentence);\n      }\n    }\n  });\n  \n  // Method 2: Extract insights from specific sections\n  const keyInsightPatterns = [\n    /key findings?[:\\-]?\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)/gi,\n    /critical[:\\-]?\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)/gi,\n    /significant[:\\-]?\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)/gi,\n    /service gaps?[:\\-]?\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)/gi,\n    /pain points?[:\\-]?\\s*(.+?)(?=\\n\\n|\\n[A-Z]|$)/gi\n  ];\n  \n  keyInsightPatterns.forEach(pattern => {\n    const matches = text.match(pattern);\n    if (matches) {\n      matches.forEach(match => {\n        const cleanMatch = match.replace(/^(key findings?|critical|significant|service gaps?|pain points?)[:\\-]?\\s*/i, '').trim();\n        if (cleanMatch.length > 20 && cleanMatch.length < 250) {\n          insights.push(cleanMatch);\n        }\n      });\n    }\n  });\n  \n  // Method 3: Look for bullet points in key sections\n  const bulletPoints = text.match(/[-•]\\s*(.+)/g);\n  if (bulletPoints) {\n    bulletPoints.forEach(bullet => {\n      const cleanBullet = bullet.replace(/^[-•]\\s*/, '').trim();\n      if (cleanBullet.length > 25 && cleanBullet.length < 200 && \n          (cleanBullet.toLowerCase().includes('gap') || \n           cleanBullet.toLowerCase().includes('priority') ||\n           cleanBullet.toLowerCase().includes('pain') ||\n           cleanBullet.toLowerCase().includes('challenge') ||\n           cleanBullet.toLowerCase().includes('opportunity'))) {\n        insights.push(cleanBullet);\n      }\n    });\n  }\n  \n  // Remove duplicates and return top insights\n  const uniqueInsights = [...new Set(insights)];\n  return uniqueInsights.slice(0, 6);\n}\n\nfunction extractImmediateActions(text) {\n  const actions = [];\n  const actionKeywords = ['immediate', 'urgent', 'priority', 'should', 'must', 'recommend', \n                         'action', 'implement', 'enhance', 'improve', 'develop', 'launch'];\n  const lines = text.split('\\n');\n  \n  lines.forEach(line => {\n    if (actionKeywords.some(keyword => line.toLowerCase().includes(keyword))) {\n      const action = line.replace(/[•\\-0-9\\.]/g, '').trim();\n      if (action.length > 15 && action.length < 200) {\n        actions.push(action);\n      }\n    }\n  });\n  \n  return actions.slice(0, 5);\n}\n\nfunction analyzeSentiment(text) {\n  const positiveWords = ['excellent', 'great', 'satisfied', 'recommend', 'positive', 'good', \n                        'strong', 'high', 'successful', 'effective', 'valuable'];\n  const negativeWords = ['poor', 'bad', 'issues', 'problems', 'negative', 'disappointing', \n                        'gap', 'challenge', 'pain', 'difficulty', 'concern'];\n  \n  const words = text.toLowerCase().split(' ');\n  const positiveCount = words.filter(word => positiveWords.includes(word)).length;\n  const negativeCount = words.filter(word => negativeWords.includes(word)).length;\n  \n  if (positiveCount > negativeCount) return 'Positive';\n  if (negativeCount > positiveCount) return 'Negative';\n  return 'Neutral';\n}\n\nfunction calculateBusinessImpactScore(data) {\n  // Simplified calculation when original data is available\n  return 78; // Default score\n}\n\nconsole.log('AI analysis processing completed:', {\n  analysis_id: finalAnalysisResult.analysis_id,\n  word_count: finalAnalysisResult.ai_generated_analysis.word_count,\n  key_findings: finalAnalysisResult.executive_summary.key_findings.length,\n  critical_insights: finalAnalysisResult.executive_summary.critical_insights.length,\n  sentiment: finalAnalysisResult.executive_summary.overall_sentiment\n});\n\nreturn [{ json: finalAnalysisResult }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        896
+      ],
+      "id": "4c4af5c3-1830-4c79-b767-16d8c036d681",
+      "name": "Code4"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "survey_analysis_results",
+        "fields": "analysis_id,generated_at,data_quality_score,ai_generated_analysis,executive_summary",
+        "options": {
+          "dateFields": "={{ $json.analysis_id }},{{ $json.generated_at }},{{ $json.data_quality_score }},{{ $json.ai_generated_analysis }},{{ $json.executive_summary }}"
+        }
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        1008,
+        896
+      ],
+      "id": "6dd0bdad-d91e-4318-8e96-e3fa5a461cf3",
+      "name": "MongoDB",
+      "credentials": {
+        "mongoDb": {
+          "id": "Pys6IRxen5Zcz6vC",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Raw Data Processing Node - Structures raw survey data for AI analysis\nconsole.log(\"Starting raw data processing...\");\n\nconst rawDataItems = $input.all();\nconsole.log(`Processing ${rawDataItems.length} survey responses from raw_data collection`);\n\nif (rawDataItems.length === 0) {\n  console.log(\"No data found - returning empty structure\");\n  return [{\n    json: {\n      error: true,\n      message: \"No survey data found in raw_data collection\",\n      timestamp: new Date().toISOString(),\n      totalResponses: 0\n    }\n  }];\n}\n\n// Initialize comprehensive analysis structure\nconst analysisData = {\n  metadata: {\n    totalResponses: rawDataItems.length,\n    dataFetchedAt: new Date().toISOString(),\n    sourceCollection: 'raw_data',\n    processingVersion: '1.1',\n    status: 'processed'\n  },\n  \n  // Demographics insights\n  demographics: {\n    ageDistribution: {},\n    locationDistribution: {},\n    familyStructureDistribution: {},\n    totalRespondents: rawDataItems.length,\n    demographicInsights: []\n  },\n  \n  // Spiritual and experience insights\n  experienceAnalysis: {\n    spiritualConnectionLevels: {},\n    pastYatraParticipation: {},\n    yatraTypesExperienced: {},\n    happyMoments: [],\n    challengesFaced: [],\n    improvementSuggestions: [],\n    experiencePatterns: {}\n  },\n  \n  // Motivation and preference insights\n  motivationAnalysis: {\n    primaryMotivations: {},\n    familyMotivations: {},\n    choosingFactors: {},\n    serviceImportanceScores: {},\n    averageImportanceRatings: {}\n  },\n  \n  // Market and business insights\n  marketInsights: {\n    budgetPreferences: {},\n    offbeatDestinationInterest: {},\n    informationSources: {},\n    contentPreferences: {},\n    recommendationLikelihood: {},\n    contactPreferences: {}\n  },\n  \n  // Qualitative data for AI analysis\n  qualitativeData: {\n    allHappyMoments: [],\n    allChallenges: [],\n    allImprovements: [],\n    allTransformativeOpinions: [],\n    customerVoices: []\n  },\n  \n  // Business metrics\n  businessMetrics: {\n    customerSatisfactionIndicators: {},\n    serviceGaps: [],\n    marketOpportunities: [],\n    competitiveAdvantages: []\n  }\n};\n\n// Process each survey response\nrawDataItems.forEach((item, index) => {\n  const response = item.json;\n  \n  try {\n    console.log(`Processing response ${index + 1}/${rawDataItems.length}`);\n    \n    // Extract and process demographics\n    if (response.age) {\n      const age = response.age;\n      analysisData.demographics.ageDistribution[age] = \n        (analysisData.demographics.ageDistribution[age] || 0) + 1;\n    }\n    \n    if (response.current_residence) {\n      const location = response.current_residence;\n      analysisData.demographics.locationDistribution[location] = \n        (analysisData.demographics.locationDistribution[location] || 0) + 1;\n    }\n    \n    if (response.family_structure) {\n      const family = response.family_structure;\n      analysisData.demographics.familyStructureDistribution[family] = \n        (analysisData.demographics.familyStructureDistribution[family] || 0) + 1;\n    }\n    \n    // Process spiritual and experience data\n    if (response.connection_spiritual_practices) {\n      const connection = response.connection_spiritual_practices;\n      analysisData.experienceAnalysis.spiritualConnectionLevels[connection] = \n        (analysisData.experienceAnalysis.spiritualConnectionLevels[connection] || 0) + 1;\n    }\n    \n    if (response.past_yatras) {\n      const pastYatra = response.past_yatras;\n      analysisData.experienceAnalysis.pastYatraParticipation[pastYatra] = \n        (analysisData.experienceAnalysis.pastYatraParticipation[pastYatra] || 0) + 1;\n    }\n    \n    if (response.type_yatras) {\n      const yatraType = response.type_yatras;\n      analysisData.experienceAnalysis.yatraTypesExperienced[yatraType] = \n        (analysisData.experienceAnalysis.yatraTypesExperienced[yatraType] || 0) + 1;\n    }\n    \n    // Collect qualitative feedback\n    if (response.happiest_yatra_moments) {\n      analysisData.experienceAnalysis.happyMoments.push(response.happiest_yatra_moments);\n      analysisData.qualitativeData.allHappyMoments.push({\n        respondent: response.name || `Respondent_${index + 1}`,\n        moment: response.happiest_yatra_moments,\n        age: response.age,\n        location: response.current_residence\n      });\n    }\n    \n    if (response.challenges_during_yatras) {\n      analysisData.experienceAnalysis.challengesFaced.push(response.challenges_during_yatras);\n      analysisData.qualitativeData.allChallenges.push({\n        respondent: response.name || `Respondent_${index + 1}`,\n        challenge: response.challenges_during_yatras,\n        age: response.age,\n        experience_level: response.past_yatras\n      });\n    }\n    \n    if (response.yatra_improvement_suggestion) {\n      analysisData.experienceAnalysis.improvementSuggestions.push(response.yatra_improvement_suggestion);\n      analysisData.qualitativeData.allImprovements.push({\n        respondent: response.name || `Respondent_${index + 1}`,\n        improvement: response.yatra_improvement_suggestion,\n        family_structure: response.family_structure\n      });\n    }\n    \n    // Process motivations\n    if (response.yatra_motivation) {\n      const motivation = response.yatra_motivation;\n      analysisData.motivationAnalysis.primaryMotivations[motivation] = \n        (analysisData.motivationAnalysis.primaryMotivations[motivation] || 0) + 1;\n    }\n    \n    if (response.family_yatra_motivation) {\n      const famMotivation = response.family_yatra_motivation;\n      analysisData.motivationAnalysis.familyMotivations[famMotivation] = \n        (analysisData.motivationAnalysis.familyMotivations[famMotivation] || 0) + 1;\n    }\n    \n    if (response.factors_chosing_mty) {\n      const factors = response.factors_chosing_mty;\n      analysisData.motivationAnalysis.choosingFactors[factors] = \n        (analysisData.motivationAnalysis.choosingFactors[factors] || 0) + 1;\n    }\n    \n    // Process service importance ratings (1-5 scale)\n    const importanceFields = [\n      'imp_spiritual_guide', 'imp_personalised_itenary', 'imp_group_size',\n      'imp_tech_updates', 'imp_transparent_pricing', 'imp_qualaity_accomadation',\n      'imp_special_access', 'imp_pre_preperation', 'imp_post_followup', 'imp_sustainabilty'\n    ];\n    \n    importanceFields.forEach(field => {\n      if (response[field]) {\n        const fieldName = field.replace('imp_', '').replace('_', ' ');\n        if (!analysisData.motivationAnalysis.serviceImportanceScores[fieldName]) {\n          analysisData.motivationAnalysis.serviceImportanceScores[fieldName] = [];\n        }\n        const score = parseInt(response[field]) || 0;\n        if (score > 0 && score <= 5) {\n          analysisData.motivationAnalysis.serviceImportanceScores[fieldName].push(score);\n        }\n      }\n    });\n    \n    // Process market preferences\n    if (response.reasonable_3day_cost) {\n      const budget = response.reasonable_3day_cost;\n      analysisData.marketInsights.budgetPreferences[budget] = \n        (analysisData.marketInsights.budgetPreferences[budget] || 0) + 1;\n    }\n    \n    if (response.exploring_offbeat_destinations) {\n      const offbeat = response.exploring_offbeat_destinations;\n      analysisData.marketInsights.offbeatDestinationInterest[offbeat] = \n        (analysisData.marketInsights.offbeatDestinationInterest[offbeat] || 0) + 1;\n    }\n    \n    if (response.source_yatra_opportunities) {\n      const source = response.source_yatra_opportunities;\n      analysisData.marketInsights.informationSources[source] = \n        (analysisData.marketInsights.informationSources[source] || 0) + 1;\n    }\n    \n    if (response.valuable_yatra_content) {\n      const content = response.valuable_yatra_content;\n      analysisData.marketInsights.contentPreferences[content] = \n        (analysisData.marketInsights.contentPreferences[content] || 0) + 1;\n    }\n    \n    if (response.recommend_mty_friend) {\n      const recommend = response.recommend_mty_friend;\n      analysisData.marketInsights.recommendationLikelihood[recommend] = \n        (analysisData.marketInsights.recommendationLikelihood[recommend] || 0) + 1;\n    }\n    \n    if (response.contact_method) {\n      const contact = response.contact_method;\n      analysisData.marketInsights.contactPreferences[contact] = \n        (analysisData.marketInsights.contactPreferences[contact] || 0) + 1;\n    }\n    \n    // Collect transformative opinions\n    if (response.transformative_yatra_opinion) {\n      analysisData.qualitativeData.allTransformativeOpinions.push({\n        respondent: response.name || `Respondent_${index + 1}`,\n        opinion: response.transformative_yatra_opinion,\n        age: response.age,\n        past_experience: response.past_yatras\n      });\n    }\n    \n    // Create customer voice profile\n    analysisData.qualitativeData.customerVoices.push({\n      respondent_id: response.survey_id || `survey_${index + 1}`,\n      name: response.name,\n      age: response.age,\n      location: response.current_residence,\n      family: response.family_structure,\n      spiritual_connection: response.connection_spiritual_practices,\n      past_experience: response.past_yatras,\n      primary_motivation: response.yatra_motivation,\n      budget_preference: response.reasonable_3day_cost,\n      key_feedback: {\n        happy_moment: response.happiest_yatra_moments,\n        challenge: response.challenges_during_yatras,\n        improvement: response.yatra_improvement_suggestion,\n        transformative_view: response.transformative_yatra_opinion\n      }\n    });\n    \n  } catch (error) {\n    console.error(`Error processing response ${index + 1}:`, error.message);\n  }\n});\n\n// Calculate averages and insights for service importance\nObject.keys(analysisData.motivationAnalysis.serviceImportanceScores).forEach(service => {\n  const scores = analysisData.motivationAnalysis.serviceImportanceScores[service];\n  if (scores.length > 0) {\n    const average = scores.reduce((a, b) => a + b, 0) / scores.length;\n    const distribution = scores.reduce((acc, score) => {\n      acc[score] = (acc[score] || 0) + 1;\n      return acc;\n    }, {});\n    \n    analysisData.motivationAnalysis.averageImportanceRatings[service] = {\n      average_score: Math.round(average * 100) / 100,\n      total_responses: scores.length,\n      score_distribution: distribution,\n      priority_level: average >= 4 ? 'High' : average >= 3 ? 'Medium' : 'Low'\n    };\n  }\n});\n\n// Generate business insights\nconst totalResponses = analysisData.metadata.totalResponses;\n\n// Customer satisfaction indicators\nanalysisData.businessMetrics.customerSatisfactionIndicators = {\n  overall_service_satisfaction: Object.values(analysisData.motivationAnalysis.averageImportanceRatings)\n    .reduce((sum, rating) => sum + rating.average_score, 0) / \n    Object.keys(analysisData.motivationAnalysis.averageImportanceRatings).length,\n  \n  recommendation_willingness: analysisData.marketInsights.recommendationLikelihood,\n  \n  repeat_customer_potential: analysisData.experienceAnalysis.pastYatraParticipation,\n  \n  service_gaps: Object.entries(analysisData.motivationAnalysis.averageImportanceRatings)\n    .filter(([service, data]) => data.average_score < 3.5)\n    .map(([service, data]) => ({\n      service: service,\n      current_score: data.average_score,\n      gap: 5 - data.average_score,\n      priority: 'High'\n    }))\n};\n\nconsole.log('Data processing completed successfully:', {\n  totalResponses: analysisData.metadata.totalResponses,\n  demographicsProcessed: Object.keys(analysisData.demographics.ageDistribution).length,\n  experiencesAnalyzed: analysisData.experienceAnalysis.happyMoments.length,\n  motivationsProcessed: Object.keys(analysisData.motivationAnalysis.primaryMotivations).length,\n  serviceRatingsCalculated: Object.keys(analysisData.motivationAnalysis.averageImportanceRatings).length,\n  qualitativeFeedback: analysisData.qualitativeData.allHappyMoments.length,\n  businessMetrics: 'calculated'\n});\n\nreturn [{ json: analysisData }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        128,
+        896
+      ],
+      "id": "6a7bebe4-220d-43d9-a197-d2c99d0d3a09",
+      "name": "Code5"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -336,
+        896
+      ],
+      "id": "2a89011e-4b95-45d8-a249-9d6359724e4c",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 960,
+        "width": 2160,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -624,
+        -416
+      ],
+      "typeVersion": 1,
+      "id": "b8c6014d-3299-480a-96da-b7ecb03dfc12",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 624,
+        "width": 2160,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -624,
+        672
+      ],
+      "typeVersion": 1,
+      "id": "c28efdb8-7ae6-4f69-8741-7e72a916e45d",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {
+    "Zoho survey Trigger": [
+      {
+        "json": {
+          "headers": {
+            "content-type": "application/json;charset=utf-8",
+            "user-agent": "Jakarta Commons-HttpClient/3.1",
+            "content-length": "1712",
+            "host": "5.78.129.125:5678",
+            "x-forwarded-for": "unknown",
+            "cache-control": "max-age=259200",
+            "connection": "keep-alive"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "p4_q9": "5",
+            "p4_q8": "5",
+            "p2_q4": "It would most likely be the crowd and overall management at the temple.",
+            "p4_q7": "3",
+            "p4_q6": "4",
+            "p5_q2": [
+              "Personalized spiritual consultations"
+            ],
+            "p7_q5": "hc74983@gmail.com",
+            "p5_q1": "₹5,000-10,000 / $75-150",
+            "p1_q1": "Anil Singh",
+            "p7_q1": "The personal connection between the temple and the devotee .",
+            "p1_q2": "26-45",
+            "p7_q2": "Probably yes",
+            "p3_q1": [],
+            "p5_q4": [
+              "Less crowded, more peaceful experience",
+              "Cost advantages"
+            ],
+            "p7_q3": [
+              "Yes - Email"
+            ],
+            "p3_q2": [],
+            "p5_q3": "Neutral - Depends on the significance",
+            "p1_q5": "Culturally connected - Mainly during major festivals",
+            "p1_q6": "Yes, 1-2 times",
+            "p1_q3": "India - North",
+            "p1_q4": "Married without children",
+            "p4_q13": "4",
+            "p4_q1": [
+              "Seeking spiritual growth/peace",
+              "Fulfilling a vow or thanksgiving",
+              "Guru's guidance/recommendation"
+            ],
+            "p2_q2": [
+              "Darshan experience at the main temple",
+              "Participating in special rituals/ceremonies",
+              "Family bonding during the journey"
+            ],
+            "p4_q5": "4",
+            "p2_q3": [
+              "Long waiting times for darshan",
+              "Overcrowding at temples"
+            ],
+            "p6_q1": [
+              "Friends and family"
+            ],
+            "p4_q4": "5",
+            "p4_q10": "2",
+            "p4_q3": [
+              "Expert spiritual guides familiar with rituals",
+              "Personalized itineraries based on preferences",
+              "Small group sizes (10-15 people)",
+              "Technology-enabled updates and communication",
+              "Transparent, all-inclusive pricing",
+              "Accommodation quality assurance",
+              "Special access/VIP darshan arrangements",
+              "Pre-trip preparation and guidance",
+              "Post-trip community and follow-up",
+              "Eco-friendly and sustainable practices"
+            ],
+            "p6_q2": [
+              "Temple history and significance",
+              "Proper ritual procedures",
+              "Live sessions with spiritual experts"
+            ],
+            "p4_q11": "5",
+            "p2_q1": [
+              "Regional temple tours"
+            ],
+            "p4_q2": [
+              "Creating shared spiritual memories"
+            ],
+            "p4_q12": "3"
+          },
+          "webhookUrl": "https://dev-n8n.mytempleyatra.in/webhook-test/my_webhook",
+          "executionMode": "test"
+        }
+      }
+    ],
+    "read_data": [
+      {
+        "json": {
+          "_id": "68863b88552009ebd76fb62f",
+          "survey_id": "survey_1753627525353_0",
+          "response_id": "response_1753627525353_0",
+          "name": "Anil Singh",
+          "age": "26-45",
+          "current_residence": "India - North",
+          "family_structure": "Married without children",
+          "connection_spiritual_practices": "Culturally connected - Mainly during major festivals",
+          "past_yatras": "Yes, 1-2 times",
+          "type_yatras": "Regional temple tours",
+          "happiest_yatra_moments": "Darshan experience at the main temple, Participating in special rituals/ceremonies, Family bonding during the journey",
+          "challenges_during_yatras": "Long waiting times for darshan, Overcrowding at temples",
+          "yatra_improvement_suggestion": "It would most likely be the crowd and overall management at the temple.",
+          "yatra_motivation": "Seeking spiritual growth/peace, Fulfilling a vow or thanksgiving, Guru's guidance/recommendation",
+          "family_yatra_motivation": "Creating shared spiritual memories",
+          "factors_chosing_mty": "Expert spiritual guides familiar with rituals, Personalized itineraries based on preferences, Small group sizes (10-15 people), Technology-enabled updates and communication, Transparent, all-inclusive pricing, Accommodation quality assurance, Special access/VIP darshan arrangements, Pre-trip preparation and guidance, Post-trip community and follow-up, Eco-friendly and sustainable practices",
+          "imp_spiritual_guide": "5",
+          "imp_personalised_itenary": "4",
+          "imp_group_size": "4",
+          "imp_tech_updates": "3",
+          "imp_transparent_pricing": "5",
+          "imp_qualaity_accomadation": "5",
+          "imp_special_access": "2",
+          "imp_pre_preperation": "5",
+          "imp_post_followup": "3",
+          "imp_sustainabilty": "4",
+          "reasonable_3day_cost": "₹5,000-10,000 / $75-150",
+          "offers_inc_price": "Personalized spiritual consultations",
+          "exploring_offbeat_destinations": "Neutral - Depends on the significance",
+          "criteria_visiting_offbeat_destination": "Less crowded, more peaceful experience, Cost advantages",
+          "source_yatra_opportunities": "Friends and family",
+          "valuable_yatra_content": "Temple history and significance, Proper ritual procedures, Live sessions with spiritual experts",
+          "transformative_yatra_opinion": "The personal connection between the temple and the devotee .",
+          "recommend_mty_friend": "Probably yes",
+          "contact_method": "Yes - Email",
+          "whatsapp": "",
+          "email": "hc74983@gmail.com",
+          "submitted_at": "2025-07-27T14:45:25.353Z",
+          "processed_at": "2025-07-27T14:45:25.353Z"
+        }
+      },
+      {
+        "json": {
+          "_id": "68875691552009ebd76fb643",
+          "survey_id": "survey_1753699982843_0",
+          "response_id": "response_1753699982843_0",
+          "name": "Anil Singh",
+          "age": "26-45",
+          "current_residence": "India - North",
+          "family_structure": "Married without children",
+          "connection_spiritual_practices": "Culturally connected - Mainly during major festivals",
+          "past_yatras": "Yes, 1-2 times",
+          "type_yatras": "Regional temple tours",
+          "happiest_yatra_moments": "Darshan experience at the main temple, Participating in special rituals/ceremonies, Family bonding during the journey",
+          "challenges_during_yatras": "Long waiting times for darshan, Overcrowding at temples",
+          "yatra_improvement_suggestion": "It would most likely be the crowd and overall management at the temple.",
+          "yatra_motivation": "Seeking spiritual growth/peace, Fulfilling a vow or thanksgiving, Guru's guidance/recommendation",
+          "family_yatra_motivation": "Creating shared spiritual memories",
+          "factors_chosing_mty": "Expert spiritual guides familiar with rituals, Personalized itineraries based on preferences, Small group sizes (10-15 people), Technology-enabled updates and communication, Transparent, all-inclusive pricing, Accommodation quality assurance, Special access/VIP darshan arrangements, Pre-trip preparation and guidance, Post-trip community and follow-up, Eco-friendly and sustainable practices",
+          "imp_spiritual_guide": "5",
+          "imp_personalised_itenary": "4",
+          "imp_group_size": "4",
+          "imp_tech_updates": "3",
+          "imp_transparent_pricing": "5",
+          "imp_qualaity_accomadation": "5",
+          "imp_special_access": "2",
+          "imp_pre_preperation": "5",
+          "imp_post_followup": "3",
+          "imp_sustainabilty": "4",
+          "reasonable_3day_cost": "₹5,000-10,000 / $75-150",
+          "offers_inc_price": "Personalized spiritual consultations",
+          "exploring_offbeat_destinations": "Neutral - Depends on the significance",
+          "criteria_visiting_offbeat_destination": "Less crowded, more peaceful experience, Cost advantages",
+          "source_yatra_opportunities": "Friends and family",
+          "valuable_yatra_content": "Temple history and significance, Proper ritual procedures, Live sessions with spiritual experts",
+          "transformative_yatra_opinion": "The personal connection between the temple and the devotee .",
+          "recommend_mty_friend": "Probably yes",
+          "contact_method": "Yes - Email",
+          "whatsapp": "",
+          "email": "hc74983@gmail.com",
+          "submitted_at": "2025-07-28T10:53:02.843Z",
+          "processed_at": "2025-07-28T10:53:02.843Z"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Zoho survey Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "insert_raw_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "insert_raw_data": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "previous_yatra_experiences": {
+      "main": [
+        []
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "previous_yatra_experiences",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "yatra_motivation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "preference_collection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Operation, do nothing": {
+      "main": [
+        [
+          {
+            "node": "respondent_info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "respondent_info": {
+      "main": [
+        []
+      ]
+    },
+    "yatra_motivation": {
+      "main": [
+        []
+      ]
+    },
+    "preference_collection": {
+      "main": [
+        []
+      ]
+    },
+    "read_data": {
+      "main": [
+        [
+          {
+            "node": "Code5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code4": {
+      "main": [
+        [
+          {
+            "node": "MongoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code5": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "read_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "24714a9f-16dd-4710-a28f-2906ca233bcb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d23ac56426fd8c8d7d33a14e099cbe8b0db39d7db57e783cf061a709b36249af"
+  },
+  "id": "I5YbjEZmmIO28dEi",
+  "tags": []
+}
